@@ -1,0 +1,42 @@
+#!/bin/sh
+
+CONFIG=$HOME/.instadd
+
+readconfig () {
+    awk -F "=" '/'$1'/ {print $2}' $CONFIG
+}
+
+if [ ! -r $CONFIG ] ; then
+    >&2 echo "Could not read from the config file $CONFIG."
+    exit 1
+fi
+
+username=$(readconfig username)
+password=$(readconfig password)
+url=$1
+
+status=$(curl -s -X POST -u $username:$password -d "url=$url" "https://www.instapaper.com/api/add")
+exitstatus=$?
+
+if [ $exitstatus -ne 0 ] ; then
+    >&2 echo "Could not connect to Instapaper."
+    exit 2
+fi
+
+if [ $status -eq 201 ] ; then
+    echo "Article has been succesfully added."
+    exit 0
+elif [ $status -eq 400 ] ; then
+    >&2 echo "Bad request or exceeded the rate limit. Did you supply a URL?"
+    exit 3
+elif [ $status -eq 403 ] ; then
+    >&2 echo "Invalid username or password."
+    exit 4
+elif [ $status -eq 500 ] ; then
+    >&2 echo "Instapaper encountered an error. Please try again later."
+    exit 5
+else
+    >&2 echo "Something went wrong."
+    >&2 echo "HTTP status code $status"
+    exit 100
+fi
