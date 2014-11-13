@@ -15,7 +15,7 @@ username=$(readconfig username)
 password=$(readconfig password)
 url=$1
 
-status=$(curl -s -X POST -u $username:$password -d "url=$url" "https://www.instapaper.com/api/add")
+status=$(curl -s -o /dev/null -w "%{http_code}" -X POST -u $username:$password -d "url=$url" "https://www.instapaper.com/api/add")
 exitstatus=$?
 
 if [ $exitstatus -ne 0 ] ; then
